@@ -73,6 +73,7 @@ local function createDropdowns()
 
                             -- Check if the player is far from the local player
                             if (currentPosition - localPosition).magnitude > 10 then
+                                print("Player moved too far from you. Stopping return prevention.")
                                 break
                             end
 
@@ -83,6 +84,7 @@ local function createDropdowns()
 
                             wait(0.1) -- Adjust as needed
                         end
+                        print("Player is no longer being monitored for position.")
                     end
 
                     spawn(preventReturn)
@@ -91,54 +93,4 @@ local function createDropdowns()
                     print("Local player character or HumanoidRootPart not found")
                 end
             else
-                print("Target player not found or has no character")
-            end
-        end
-    })
-
-    -- Dropdown for teleporting one player to another
-    TeleportTab:AddDropdown({
-        Name = "Select Source Player",
-        List = getPlayerNames(),
-        Callback = function(sourcePlayerName)
-            local sourcePlayer = game.Players:FindFirstChild(sourcePlayerName)
-            if sourcePlayer and sourcePlayer.Character and sourcePlayer.Character:FindFirstChild("HumanoidRootPart") then
-                local sourceCFrame = sourcePlayer.Character.HumanoidRootPart.CFrame
-                TeleportTab:AddDropdown({
-                    Name = "Select Destination Player",
-                    List = getPlayerNames(),
-                    Callback = function(destinationPlayerName)
-                        local destinationPlayer = game.Players:FindFirstChild(destinationPlayerName)
-                        if destinationPlayer and destinationPlayer.Character and destinationPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                            destinationPlayer.Character.HumanoidRootPart.CFrame = sourceCFrame
-                            print("Teleported " .. destinationPlayerName .. " to " .. sourcePlayerName)
-                        else
-                            print("Destination player not found or has no character")
-                        end
-                    end
-                })
-            else
-                print("Source player not found or has no character")
-            end
-        end
-    })
-end
-
--- Update dropdown lists
-local function updateDropdowns()
-    local playerNames = getPlayerNames()
-    for _, dropdown in ipairs(TeleportTab:GetDropdowns()) do
-        dropdown:UpdateList(playerNames)
-    end
-end
-
--- Initialize dropdowns and set up listeners
-createDropdowns()
-game.Players.PlayerAdded:Connect(function()
-    wait(1) -- Delay to ensure players are fully loaded
-    updateDropdowns()
-end)
-game.Players.PlayerRemoving:Connect(updateDropdowns)
-
--- Initial update
-updateDropdowns()
+                print("Target player not found or has no
