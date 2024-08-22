@@ -24,73 +24,100 @@ local TeleportTab = Window:MakeTab({
     PremiumOnly = false
 })
 
--- Helper function to get player names
-local function getPlayerNames()
-    local names = {}
-    for _, player in ipairs(game.Players:GetPlayers()) do
-        table.insert(names, player.Name)
-    end
-    return names
+-- Helper function to get player by name
+local function getPlayerByName(playerName)
+    return game.Players:FindFirstChild(playerName)
 end
 
--- Create dropdown menus for player selection
-local function createDropdowns()
-    -- Dropdown for teleporting to a player
-    TeleportTab:AddDropdown({
-        Name = "Select Player to TP To",
-        List = getPlayerNames(),
-        Callback = function(playerName)
-            local player = game.Players:FindFirstChild(playerName)
-            if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                local targetCFrame = player.Character.HumanoidRootPart.CFrame
-                game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = targetCFrame
-                print("Teleported to " .. playerName)
-            else
-                print("Player not found or has no character")
-            end
+-- Teleport to player
+TeleportTab:AddTextbox({
+    Name = "Player Name to TP To",
+    Default = "PlayerName",
+    TextDisappear = false,
+    Callback = function(playerName)
+        local player = getPlayerByName(playerName)
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetCFrame = player.Character.HumanoidRootPart.CFrame
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = targetCFrame
+            print("Teleported to " .. playerName)
+        else
+            print("Player not found or has no character")
         end
-    })
+    end
+})
 
-    -- Dropdown for bringing a player to the local player
-    TeleportTab:AddDropdown({
-        Name = "Select Player to Bring",
-        List = getPlayerNames(),
-        Callback = function(playerName)
-            local targetPlayer = game.Players:FindFirstChild(playerName)
-            local localPlayer = game.Players.LocalPlayer
+-- Bring player to me
+TeleportTab:AddTextbox({
+    Name = "Player Name to Bring",
+    Default = "PlayerName",
+    TextDisappear = false,
+    Callback = function(playerName)
+        local player = getPlayerByName(playerName)
+        local localPlayer = game.Players.LocalPlayer
 
-            if targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    -- Store the current position to prevent returning
-                    local originalPosition = targetPlayer.Character.HumanoidRootPart.Position
-                    targetPlayer.Character.HumanoidRootPart.CFrame = localPlayer.Character.HumanoidRootPart.CFrame
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local originalPosition = player.Character.HumanoidRootPart.Position
+                player.Character.HumanoidRootPart.CFrame = localPlayer.Character.HumanoidRootPart.CFrame
 
-                    -- Prevent the player from returning to the original position
-                    local function preventReturn()
-                        while targetPlayer and targetPlayer.Character and targetPlayer.Character:FindFirstChild("HumanoidRootPart") do
-                            local currentPosition = targetPlayer.Character.HumanoidRootPart.Position
-                            local localPosition = localPlayer.Character.HumanoidRootPart.Position
+                -- Prevent the player from returning to their original position
+                local function preventReturn()
+                    while player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") do
+                        local currentPosition = player.Character.HumanoidRootPart.Position
+                        local localPosition = localPlayer.Character.HumanoidRootPart.Position
 
-                            -- Check if the player is far from the local player
-                            if (currentPosition - localPosition).magnitude > 10 then
-                                print("Player moved too far from you. Stopping return prevention.")
-                                break
-                            end
-
-                            -- Prevent returning to the original position
-                            if (currentPosition - originalPosition).magnitude < 5 then
-                                targetPlayer.Character.HumanoidRootPart.CFrame = localPlayer.Character.HumanoidRootPart.CFrame
-                            end
-
-                            wait(0.1) -- Adjust as needed
+                        -- Check if the player has moved too far from you
+                        if (currentPosition - localPosition).magnitude > 10 then
+                            print("Player moved too far from you. Stopping return prevention.")
+                            break
                         end
-                        print("Player is no longer being monitored for position.")
-                    end
 
-                    spawn(preventReturn)
-                    print("Brought " .. playerName .. " to you and they cannot return to their old position")
-                else
-                    print("Local player character or HumanoidRootPart not found")
+                        -- Prevent returning to the original position
+                        if (currentPosition - originalPosition).magnitude < 5 then
+                            player.Character.HumanoidRootPart.CFrame = localPlayer.Character.HumanoidRootPart.CFrame
+                        end
+
+                        wait(0.1)
+                    end
+                    print("Player is no longer being monitored for position.")
                 end
+
+                spawn(preventReturn)
+                print("Brought " .. playerName .. " to you and they cannot return to their old position")
             else
-                print("Target player not found or has no
+                print("Local player character or HumanoidRootPart not found")
+            end
+        else
+            print("Target player not found or has no character")
+        end
+    end
+})
+
+-- Teleport one player to another
+TeleportTab:AddTextbox({
+    Name = "Source Player Name",
+    Default = "SourcePlayerName",
+    TextDisappear = false,
+    Callback = function(sourcePlayerName)
+        local sourcePlayer = getPlayerByName(sourcePlayerName)
+        if sourcePlayer and sourcePlayer.Character and sourcePlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local sourceCFrame = sourcePlayer.Character.HumanoidRootPart.CFrame
+            TeleportTab:AddTextbox({
+                Name = "Destination Player Name",
+                Default = "DestinationPlayerName",
+                TextDisappear = false,
+                Callback = function(destinationPlayerName)
+                    local destinationPlayer = getPlayerByName(destinationPlayerName)
+                    if destinationPlayer and destinationPlayer.Character and destinationPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        destinationPlayer.Character.HumanoidRootPart.CFrame = sourceCFrame
+                        print("Teleported " .. destinationPlayerName .. " to " .. sourcePlayerName)
+                    else
+                        print("Destination player not found or has no character")
+                    end
+                end
+            })
+        else
+            print("Source player not found or has no character")
+        end
+    end
+})
