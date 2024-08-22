@@ -24,14 +24,27 @@ local TeleportTab = Window:MakeTab({
     PremiumOnly = false
 })
 
--- Add interactive elements to the Teleport tab
-TeleportTab:AddLabel("Teleportation Settings")
+-- Helper function to get player names
+local function getPlayerNames()
+    local names = {}
+    for _, player in ipairs(game.Players:GetPlayers()) do
+        table.insert(names, player.Name)
+    end
+    return names
+end
+
+-- Update dropdown lists
+local function updateDropdowns()
+    local players = getPlayerNames()
+    TeleportTab:UpdateDropdown("Select Player to TP To", players)
+    TeleportTab:UpdateDropdown("Select Player to Bring", players)
+    TeleportTab:UpdateDropdown("Select Source Player", players)
+end
 
 -- Teleport to player
-TeleportTab:AddTextbox({
-    Name = "Player Name to TP To",
-    Default = "PlayerName",
-    TextDisappear = false,
+TeleportTab:AddDropdown({
+    Name = "Select Player to TP To",
+    List = getPlayerNames(),
     Callback = function(playerName)
         local player = game.Players:FindFirstChild(playerName)
         if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
@@ -45,16 +58,44 @@ TeleportTab:AddTextbox({
 })
 
 -- Bring player to me
-TeleportTab:AddTextbox({
-    Name = "Player Name to Bring",
-    Default = "PlayerName",
-    TextDisappear = false,
+TeleportTab:AddDropdown({
+    Name = "Select Player to Bring",
+    List = getPlayerNames(),
     Callback = function(playerName)
         local player = game.Players:FindFirstChild(playerName)
+        local localPlayer = game.Players.LocalPlayer
+
         if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            local myCFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
-            player.Character.HumanoidRootPart.CFrame = myCFrame
-            print("Brought " .. playerName .. " to you")
+            if localPlayer.Character and localPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                local originalPosition = player.Character.HumanoidRootPart.Position
+                -- Move player to the local player
+                player.Character.HumanoidRootPart.CFrame = localPlayer.Character.HumanoidRootPart.CFrame
+
+                -- Prevent the player from moving back to the original position
+                local function preventReturn()
+                    while player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") do
+                        local currentPosition = player.Character.HumanoidRootPart.Position
+                        local localPosition = localPlayer.Character.HumanoidRootPart.Position
+
+                        -- If the player moves away from their new position, stop enforcing the restriction
+                        if (currentPosition - localPosition).magnitude > 10 then
+                            break
+                        end
+
+                        -- Ensure the player doesn't return to their original position
+                        if (currentPosition - originalPosition).magnitude < 5 then
+                            player.Character.HumanoidRootPart.CFrame = localPlayer.Character.HumanoidRootPart.CFrame
+                        end
+
+                        wait(0.1) -- Adjust the wait time as needed
+                    end
+                end
+                -- Start the function to prevent the player from returning to the old position
+                spawn(preventReturn)
+                print("Brought " .. playerName .. " to you and they cannot return to their old position")
+            else
+                print("Local player character or HumanoidRootPart not found")
+            end
         else
             print("Player not found or has no character")
         end
@@ -62,18 +103,16 @@ TeleportTab:AddTextbox({
 })
 
 -- Teleport one player to another
-TeleportTab:AddTextbox({
-    Name = "Source Player Name",
-    Default = "SourcePlayerName",
-    TextDisappear = false,
+TeleportTab:AddDropdown({
+    Name = "Select Source Player",
+    List = getPlayerNames(),
     Callback = function(sourcePlayerName)
         local sourcePlayer = game.Players:FindFirstChild(sourcePlayerName)
         if sourcePlayer and sourcePlayer.Character and sourcePlayer.Character:FindFirstChild("HumanoidRootPart") then
             local sourceCFrame = sourcePlayer.Character.HumanoidRootPart.CFrame
-            TeleportTab:AddTextbox({
-                Name = "Destination Player Name",
-                Default = "DestinationPlayerName",
-                TextDisappear = false,
+            TeleportTab:AddDropdown({
+                Name = "Select Destination Player",
+                List = getPlayerNames(),
                 Callback = function(destinationPlayerName)
                     local destinationPlayer = game.Players:FindFirstChild(destinationPlayerName)
                     if destinationPlayer and destinationPlayer.Character and destinationPlayer.Character:FindFirstChild("HumanoidRootPart") then
@@ -89,3 +128,8 @@ TeleportTab:AddTextbox({
         end
     end
 })
+
+-- Update dropdowns initially and whenever the player list changes
+game.Players.PlayerAdded:Connect(updateDropdowns)
+game.Players.PlayerRemoving:Connect(updateDropdowns)
+updateDropdowns()
