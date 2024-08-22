@@ -33,9 +33,29 @@ local function getPlayerNames()
     return names
 end
 
--- Create dropdown menus for player selection
+-- Update dropdown lists
+local function updateDropdowns()
+    local playerNames = getPlayerNames()
+
+    -- Update the dropdowns if they exist
+    local teleportToDropdown = TeleportTab:FindDropdown("Select Player to TP To")
+    if teleportToDropdown then
+        teleportToDropdown:UpdateList(playerNames)
+    end
+
+    local bringDropdown = TeleportTab:FindDropdown("Select Player to Bring")
+    if bringDropdown then
+        bringDropdown:UpdateList(playerNames)
+    end
+
+    local sourceDropdown = TeleportTab:FindDropdown("Select Source Player")
+    if sourceDropdown then
+        sourceDropdown:UpdateList(playerNames)
+    end
+end
+
+-- Create dropdown menus
 local function createDropdowns()
-    -- Dropdown for teleporting to a player
     TeleportTab:AddDropdown({
         Name = "Select Player to TP To",
         List = getPlayerNames(),
@@ -51,7 +71,6 @@ local function createDropdowns()
         end
     })
 
-    -- Dropdown for bringing a player to the local player
     TeleportTab:AddDropdown({
         Name = "Select Player to Bring",
         List = getPlayerNames(),
@@ -96,7 +115,6 @@ local function createDropdowns()
         end
     })
 
-    -- Dropdown for teleporting one player to another
     TeleportTab:AddDropdown({
         Name = "Select Source Player",
         List = getPlayerNames(),
@@ -124,7 +142,7 @@ local function createDropdowns()
     })
 end
 
--- Initialize dropdown menus and update them when players are added or removed
+-- Initialize dropdowns and set up listeners
 createDropdowns()
-game.Players.PlayerAdded:Connect(createDropdowns)
-game.Players.PlayerRemoving:Connect(createDropdowns)
+game.Players.PlayerAdded:Connect(updateDropdowns)
+game.Players.PlayerRemoving:Connect(updateDropdowns)
