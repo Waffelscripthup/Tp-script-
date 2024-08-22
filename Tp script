@@ -1,0 +1,91 @@
+-- Load OrionLib
+local OrionLib = loadstring(game:HttpGet('https://raw.githubusercontent.com/shlexware/Orion/main/source'))()
+
+-- Create the main window
+local Window = OrionLib:MakeWindow({
+    Name = "Waffle Script Box",
+    HidePremium = false,
+    SaveConfig = true,
+    ConfigFolder = "OrionTest"
+})
+
+-- Show a welcome notification
+OrionLib:MakeNotification({
+    Name = "Welcome!",
+    Content = "Thanks for using my script!",
+    Image = "rbxassetid://4483345998",
+    Time = 5
+})
+
+-- Create a Teleport tab
+local TeleportTab = Window:MakeTab({
+    Name = "Teleport",
+    Icon = "rbxassetid://4483345998",
+    PremiumOnly = false
+})
+
+-- Add interactive elements to the Teleport tab
+TeleportTab:AddLabel("Teleportation Settings")
+
+-- Teleport to player
+TeleportTab:AddTextbox({
+    Name = "Player Name to TP To",
+    Default = "PlayerName",
+    TextDisappear = false,
+    Callback = function(playerName)
+        local player = game.Players:FindFirstChild(playerName)
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local targetCFrame = player.Character.HumanoidRootPart.CFrame
+            game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame = targetCFrame
+            print("Teleported to " .. playerName)
+        else
+            print("Player not found or has no character")
+        end
+    end
+})
+
+-- Bring player to me
+TeleportTab:AddTextbox({
+    Name = "Player Name to Bring",
+    Default = "PlayerName",
+    TextDisappear = false,
+    Callback = function(playerName)
+        local player = game.Players:FindFirstChild(playerName)
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local myCFrame = game.Players.LocalPlayer.Character.HumanoidRootPart.CFrame
+            player.Character.HumanoidRootPart.CFrame = myCFrame
+            print("Brought " .. playerName .. " to you")
+        else
+            print("Player not found or has no character")
+        end
+    end
+})
+
+-- Teleport one player to another
+TeleportTab:AddTextbox({
+    Name = "Source Player Name",
+    Default = "SourcePlayerName",
+    TextDisappear = false,
+    Callback = function(sourcePlayerName)
+        local sourcePlayer = game.Players:FindFirstChild(sourcePlayerName)
+        if sourcePlayer and sourcePlayer.Character and sourcePlayer.Character:FindFirstChild("HumanoidRootPart") then
+            local sourceCFrame = sourcePlayer.Character.HumanoidRootPart.CFrame
+            TeleportTab:AddTextbox({
+                Name = "Destination Player Name",
+                Default = "DestinationPlayerName",
+                TextDisappear = false,
+                Callback = function(destinationPlayerName)
+                    local destinationPlayer = game.Players:FindFirstChild(destinationPlayerName)
+                    if destinationPlayer and destinationPlayer.Character and destinationPlayer.Character:FindFirstChild("HumanoidRootPart") then
+                        destinationPlayer.Character.HumanoidRootPart.CFrame = sourceCFrame
+                        print("Teleported " .. destinationPlayerName .. " to " .. sourcePlayerName)
+                    else
+                        print("Destination player not found or has no character")
+                    end
+                end
+            })
+        else
+            print("Source player not found or has no character")
+        end
+    end
+})
